@@ -51,7 +51,8 @@
   // if Kc is chosen well, the additional required power due to increased melting should be compensated.
   #define PID_ADD_EXTRUSION_RATE
   #if ENABLED(PID_ADD_EXTRUSION_RATE)
-    #define  DEFAULT_Kc (1) //heating power=Kc*(e_speed)
+    #define DEFAULT_Kc (100) //heating power=Kc*(e_speed)
+    #define LPQ_MAX_LEN 50
   #endif
 #endif
 
@@ -152,10 +153,6 @@
   // Play a little bit with small adjustments (0.5mm) and check the behaviour.
   // The M119 (endstops report) will start reporting the Z2 Endstop as well.
 
-  #define Z2_STEP_PIN E2_STEP_PIN           // Stepper to be used to Z2 axis.
-  #define Z2_DIR_PIN E2_DIR_PIN
-  #define Z2_ENABLE_PIN E2_ENABLE_PIN
-
   // #define Z_DUAL_ENDSTOPS
 
   #if ENABLED(Z_DUAL_ENDSTOPS)
@@ -169,8 +166,10 @@
 // Same again but for Y Axis.
 //#define Y_DUAL_STEPPER_DRIVERS
 
-// Define if the two Y drives need to rotate in opposite directions
-#define INVERT_Y2_VS_Y_DIR true
+#if ENABLED(Y_DUAL_STEPPER_DRIVERS)
+  // Define if the two Y drives need to rotate in opposite directions
+  #define INVERT_Y2_VS_Y_DIR true
+#endif
 
 // Enable this for dual x-carriage printers.
 // A dual x-carriage design has the advantage that the inactive extruder can be parked which
