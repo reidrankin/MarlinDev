@@ -254,8 +254,13 @@ static int cmd_queue_index_w = 0;
 static int commands_in_queue = 0;
 static char command_queue[BUFSIZE][MAX_CMD_SIZE];
 
-LinearUnit input_linear_unit = LINEARUNIT_MM;
-TempUnit input_temp_unit = TEMPUNIT_C;
+#if ENABLED(USE_G20G21)
+  float linear_unit_modifier = 1.0;
+  float volumetric_unit_modifier = 1.0;
+#endif
+#if ENABLED(USE_M149)
+  TempUnit input_temp_units = TEMPUNIT_C;
+#endif
 const float homing_feedrate[] = HOMING_FEEDRATE;
 bool axis_relative_modes[] = AXIS_RELATIVE_MODES;
 int feedrate_multiplier = 100; //100->1 200->2
@@ -990,65 +995,80 @@ uint16_t code_value_ushort() { return (uint16_t)strtoul(seen_pointer + 1, NULL, 
 
 uint8_t code_value_byte() { return (uint8_t)(constrain(strtol(seen_pointer + 1, NULL, 10), 0, 255)); }
 
-bool code_value_bool() { return code_value_byte() > 0; }
+inline bool code_value_bool() { return code_value_byte() > 0; }
 
-inline float linear_unit_modifier() {
-  switch (input_linear_unit) {
-    case LINEARUNIT_INCH:
-      return 25.4;
-    case LINEARUNIT_MM:
-    default:
-      return 1.0;
+#if ENABLED(USE_G20G21)
+  inline void set_input_linear_units(LinearUnit units) {
+    switch (units) {
+      case LINEARUNIT_INCH:
+        linear_unit_modifier = 25.4;
+        break;
+      case LINEARUNIT_MM:
+      default:
+        linear_unit_modifier = 1.0;
+        break;
+    }
+    volumetric_unit_modifier = pow(linear_unit_modifier, 3.0);
   }
-}
 
-inline float volumetric_unit_modifier() {
-  return pow(linear_unit_modifier(), 3.0);
-}
-
-inline float axis_unit_modifier(int axis) {
-  return (axis == E_AXIS && volumetric_enabled ? volumetric_unit_modifier() : linear_unit_modifier());
-}
-
-inline float code_value_linear_units() {
-  return code_value_float() * linear_unit_modifier();
-}
-
-inline float code_value_per_axis_unit(int axis) {
-  return code_value_float() / axis_unit_modifier(axis);
-}
-
-inline float code_value_axis_units(int axis) {
-  return code_value_float() * axis_unit_modifier(axis);
-}
-
-float code_value_temp_abs() {
-  switch (input_temp_unit) {
-    case TEMPUNIT_C:
-      return code_value_float();
-    case TEMPUNIT_F:
-      return (code_value_float() - 32) / 1.8;
-    case TEMPUNIT_K:
-      return code_value_float() - 272.15;
-    case TEMPUNIT_R:
-      return (code_value_float() - 491.67) / 1.8;
-    default:
-      return code_value_float();
+  inline float axis_unit_modifier(int axis) {
+    return (axis == E_AXIS && volumetric_enabled ? volumetric_unit_modifier : linear_unit_modifier);
   }
-}
 
-float code_value_temp_diff() {
-  switch (input_temp_unit) {
-    case TEMPUNIT_C:
-    case TEMPUNIT_K:
-      return code_value_float();
-    case TEMPUNIT_R:
-    case TEMPUNIT_F:
-      return code_value_float() / 1.8;
-    default:
-      return code_value_float();
+  inline float code_value_linear_units() {
+    return code_value_float() * linear_unit_modifier;
   }
-}
+
+  inline float code_value_per_axis_unit(int axis) {
+    return code_value_float() / axis_unit_modifier(axis);
+  }
+
+  inline float code_value_axis_units(int axis) {
+    return code_value_float() * axis_unit_modifier(axis);
+  }
+#else
+  inline float code_value_linear_units() { return code_value_float(); }
+
+  inline float code_value_per_axis_unit(int axis) { return code_value_float(); }
+
+  inline float code_value_axis_units(int axis) { return code_value_float(); }
+#endif
+
+#if ENABLED(USE_M149)
+  inline void set_input_temp_units(TempUnit units) {
+    input_temp_units = units;
+  }
+  float code_value_temp_abs() {
+    switch (input_temp_units) {
+      case TEMPUNIT_C:
+        return code_value_float();
+      case TEMPUNIT_F:
+        return (code_value_float() - 32) / 1.8;
+      case TEMPUNIT_K:
+        return code_value_float() - 272.15;
+      case TEMPUNIT_R:
+        return (code_value_float() - 491.67) / 1.8;
+      default:
+        return code_value_float();
+    }
+  }
+
+  float code_value_temp_diff() {
+    switch (input_temp_units) {
+      case TEMPUNIT_C:
+      case TEMPUNIT_K:
+        return code_value_float();
+      case TEMPUNIT_R:
+      case TEMPUNIT_F:
+        return code_value_float() / 1.8;
+      default:
+        return code_value_float();
+    }
+  }
+#else
+  inline float code_value_temp_abs() { return code_value_float(); }
+  inline float code_value_temp_diff() { return code_value_float(); }
+#endif
 
 inline millis_t code_value_millis() {
   return code_value_ulong();
@@ -2290,19 +2310,21 @@ inline void gcode_G4() {
 
 #endif //FWRETRACT
 
-/**
- * G20: Set input mode to inches
- */
-inline void gcode_G20() {
-  input_linear_unit = LINEARUNIT_INCH;
-}
+#if ENABLED(USE_G20G21)
+  /**
+   * G20: Set input mode to inches
+   */
+  inline void gcode_G20() {
+    set_input_linear_units(LINEARUNIT_INCH);
+  }
 
-/**
- * G21: Set input mode to millimeters
- */
-inline void gcode_G21() {
-  input_linear_unit = LINEARUNIT_MM;
-}
+  /**
+   * G21: Set input mode to millimeters
+   */
+  inline void gcode_G21() {
+    set_input_linear_units(LINEARUNIT_MM);
+  }
+#endif
 
 /**
  * G28: Home all axes according to settings
@@ -4218,20 +4240,22 @@ inline void gcode_M140() {
 
 #endif
 
-/**
- * M149: Set temperature units
- */
-inline void gcode_M149() {
-  if (code_seen('C')) {
-    input_temp_unit = TEMPUNIT_C;
-  } else if (code_seen('K')) {
-    input_temp_unit = TEMPUNIT_K;
-  } else if (code_seen('F')) {
-    input_temp_unit = TEMPUNIT_F;
-  } else if (code_seen('R')) {
-    input_temp_unit = TEMPUNIT_R;
+#if ENABLED(USE_M149)
+  /**
+   * M149: Set temperature units
+   */
+  inline void gcode_M149() {
+    if (code_seen('C')) {
+      set_input_temp_units(TEMPUNIT_C);
+    } else if (code_seen('K')) {
+      set_input_temp_units(TEMPUNIT_K);
+    } else if (code_seen('F')) {
+      set_input_temp_units(TEMPUNIT_F);
+    } else if (code_seen('R')) {
+      set_input_temp_units(TEMPUNIT_R);
+    }
   }
-}
+#endif
 
 #if HAS_POWER_SWITCH
 
@@ -5842,13 +5866,15 @@ void process_next_command() {
 
       #endif //FWRETRACT
       
-      case 20: //G20: Inch Mode
-        gcode_G20();
-        break;
-      
-      case 21: //G21: MM Mode
-        gcode_G21();
-        break;
+      #if ENABLED(USE_G20G21)
+        case 20: //G20: Inch Mode
+          gcode_G20();
+          break;
+        
+        case 21: //G21: MM Mode
+          gcode_G21();
+          break;
+      #endif
 
       case 28: // G28: Home all axes, one at a time
         gcode_G28();
@@ -6077,9 +6103,11 @@ void process_next_command() {
 
       #endif
       
-      case 149:
-        gcode_M149();
-        break;
+      #if ENABLED(USE_M149)
+        case 149:
+          gcode_M149();
+          break;
+      #endif
 
       #if ENABLED(BLINKM)
 
