@@ -253,7 +253,7 @@ static int cmd_queue_index_w = 0;
 static int commands_in_queue = 0;
 static char command_queue[BUFSIZE][MAX_CMD_SIZE];
 
-bool in_inchmode = false;
+LinearUnit input_linear_unit = LINEARUNIT_MM;
 const float homing_feedrate[] = HOMING_FEEDRATE;
 bool axis_relative_modes[] = AXIS_RELATIVE_MODES;
 int feedrate_multiplier = 100; //100->1 200->2
@@ -994,7 +994,13 @@ long code_value_long() { return strtol(seen_pointer + 1, NULL, 10); }
 int16_t code_value_short() { return (int16_t)strtol(seen_pointer + 1, NULL, 10); }
 
 inline float linear_unit_modifier() {
-  return (in_inchmode ? 25.4 : 1.0);
+  switch (input_linear_unit) {
+    case LINEARUNIT_INCH:
+      return 25.4;
+    case LINEARUNIT_MM:
+    default:
+      return 1.0;
+  }
 }
 
 inline float volumetric_unit_modifier() {
@@ -2253,14 +2259,14 @@ inline void gcode_G4() {
  * G20: Set input mode to inches
  */
 inline void gcode_G20() {
-  in_inchmode = true;
+  input_linear_unit = LINEARUNIT_INCH;
 }
 
 /**
  * G21: Set input mode to millimeters
  */
 inline void gcode_G21() {
-  in_inchmode = false;
+  input_linear_unit = LINEARUNIT_MM;
 }
 
 /**

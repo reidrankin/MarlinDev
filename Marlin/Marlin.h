@@ -198,6 +198,8 @@ enum AxisEnum {X_AXIS=0, A_AXIS=0, Y_AXIS=1, B_AXIS=1, Z_AXIS=2, C_AXIS=2, E_AXI
 
 enum EndstopEnum {X_MIN=0, Y_MIN=1, Z_MIN=2, Z_MIN_PROBE=3, X_MAX=4, Y_MAX=5, Z_MAX=6, Z2_MIN=7, Z2_MAX=8};
 
+typedef { LINEARUNIT_MM = 0, LINEARUNIT_INCH = 1 } LinearUnit;
+
 void enable_all_steppers();
 void disable_all_steppers();
 
