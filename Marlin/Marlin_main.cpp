@@ -1038,6 +1038,7 @@ inline bool code_value_bool() { return code_value_byte() > 0; }
   inline void set_input_temp_units(TempUnit units) {
     input_temp_units = units;
   }
+  
   float code_value_temp_abs() {
     switch (input_temp_units) {
       case TEMPUNIT_C:
@@ -1046,8 +1047,6 @@ inline bool code_value_bool() { return code_value_byte() > 0; }
         return (code_value_float() - 32) / 1.8;
       case TEMPUNIT_K:
         return code_value_float() - 272.15;
-      case TEMPUNIT_R:
-        return (code_value_float() - 491.67) / 1.8;
       default:
         return code_value_float();
     }
@@ -1058,7 +1057,6 @@ inline bool code_value_bool() { return code_value_byte() > 0; }
       case TEMPUNIT_C:
       case TEMPUNIT_K:
         return code_value_float();
-      case TEMPUNIT_R:
       case TEMPUNIT_F:
         return code_value_float() / 1.8;
       default:
@@ -4251,8 +4249,6 @@ inline void gcode_M140() {
       set_input_temp_units(TEMPUNIT_K);
     } else if (code_seen('F')) {
       set_input_temp_units(TEMPUNIT_F);
-    } else if (code_seen('R')) {
-      set_input_temp_units(TEMPUNIT_R);
     }
   }
 #endif
