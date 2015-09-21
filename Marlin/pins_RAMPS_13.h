@@ -170,26 +170,26 @@
       #define DOGLCD_A0 27
       #define LCD_PIN_BL 33
     #elif ENABLED(MINIPANEL)
-       #define BEEPER_PIN 42
-       // Pins for DOGM SPI LCD Support
-       #define DOGLCD_A0  44
-       #define DOGLCD_CS  66
-       #define LCD_PIN_BL	65	// backlight LED on A11/D65
-       #define SDSS   53
-       
-       #define KILL_PIN 64
-       // GLCD features
-       //#define LCD_CONTRAST 190
-       // Uncomment screen orientation
-         // #define LCD_SCREEN_ROT_90
-         // #define LCD_SCREEN_ROT_180
-         // #define LCD_SCREEN_ROT_270
-       //The encoder and click button
-       #define BTN_EN1 40
-       #define BTN_EN2 63
-       #define BTN_ENC 59  //the click switch
-       //not connected to a pin
-       #define SD_DETECT_PIN 49
+      #define BEEPER_PIN 42
+      // Pins for DOGM SPI LCD Support
+      #define DOGLCD_A0  44
+      #define DOGLCD_CS  66
+      #define LCD_PIN_BL	65	// backlight LED on A11/D65
+      #define SDSS   53
+
+      #define KILL_PIN 64
+      // GLCD features
+      //#define LCD_CONTRAST 190
+      // Uncomment screen orientation
+      //#define LCD_SCREEN_ROT_90
+      //#define LCD_SCREEN_ROT_180
+      //#define LCD_SCREEN_ROT_270
+      //The encoder and click button
+      #define BTN_EN1 40
+      #define BTN_EN2 63
+      #define BTN_ENC 59  //the click switch
+      //not connected to a pin
+      #define SD_DETECT_PIN 49
 
     #else
 
@@ -226,10 +226,10 @@
 
     // Buttons are attached to a shift register
     // Not wired yet
-    // #define SHIFT_CLK 38
-    // #define SHIFT_LD 42
-    // #define SHIFT_OUT 40
-    // #define SHIFT_EN 17
+    //#define SHIFT_CLK 38
+    //#define SHIFT_LD 42
+    //#define SHIFT_OUT 40
+    //#define SHIFT_EN 17
 
     #define LCD_PINS_RS 16
     #define LCD_PINS_ENABLE 17
